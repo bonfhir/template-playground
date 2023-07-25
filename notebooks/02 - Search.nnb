@@ -1,0 +1,359 @@
+{
+    "cells": [
+        {
+            "language": "markdown",
+            "source": [
+                "# Search"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "markdown",
+            "source": [
+                "## Basic search"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "typescript",
+            "source": [
+                "import { FetchFhirClient } from \"@bonfhir/core/r4b\":\n\nconst client = new FetchFhirClient({\n    baseUrl: \"http://localhost:8103/fhir/R4/\",\n    auth: {\n        tokenUrl: \"http://localhost:8103/oauth2/token\",\n        clientId: \"f54370de-eaf3-4d81-a17e-24860f667912\",\n        clientSecret:\n        \"75d8e7d06bf9283926c51d5f461295ccf0b69128e983b6ecdd5a9c07506895de\",\n   },\n});\n\n// Execute a basic search\n// See https://hl7.org/fhir/search.html\nlet searchResult = await client.search(\"Patient\", search => search._count(2)._total(\"accurate\"));\n\nconst output = {\n    // Search match returns all the resources that where a match for the search\n    // See https://www.hl7.org/fhir/valueset-search-entry-mode.html\n    patients: searchResult.searchMatch().map(JSON.stringify),\n\n    // Total number of matching entities, regardless of pagination\n    total: searchResult.total,\n\n    nextPageUrl: searchResult.linkUrl(\"next\"),\n};\noutput;"
+            ],
+            "outputs": [
+                {
+                    "items": [
+                        {
+                            "mime": "text/plain",
+                            "value": [
+                                "{",
+                                "  patients: [",
+                                "    \u001b[32m'{\"name\":[{\"given\":[\"Miles\"],\"family\":\"Davis\"}],\"gender\":\"male\",\"resourceType\":\"Patient\",\"text\":{\"status\":\"generated\",\"div\":\"<div xmlns=\\\\\"http://www.w3.org/1999/xhtml\\\\\"><ul><li><span>Gender: </span>male</li><li><span>Name: </span><ul><li>Miles Davis</li></ul></li></ul></div>\"},\"id\":\"337a509c-0bd9-48f0-8f89-855bad9d8c6f\",\"meta\":{\"versionId\":\"ccd16cfd-8367-44cd-aa5b-d1a2358dedea\",\"lastUpdated\":\"2023-07-25T15:03:16.026Z\"},\"managingOrganization\":{\"reference\":\"Organization/b747dc3c-bcee-413e-ace8-c1f235216d6c\",\"type\":\"Organization\",\"display\":\"Acme, Inc\"}}'\u001b[39m,",
+                                "    \u001b[32m'{\"name\":[{\"given\":[\"John\"],\"family\":\"Coltrane\"}],\"gender\":\"male\",\"resourceType\":\"Patient\",\"text\":{\"status\":\"generated\",\"div\":\"<div xmlns=\\\\\"http://www.w3.org/1999/xhtml\\\\\"><ul><li><span>Gender: </span>male</li><li><span>Name: </span><ul><li>John Coltrane</li></ul></li></ul></div>\"},\"id\":\"894e29b1-4b2b-44d7-8d8c-2ae21fdfd20b\",\"meta\":{\"versionId\":\"387a8a11-8296-44d4-8a09-7895daea4e7f\",\"lastUpdated\":\"2023-07-25T15:03:16.049Z\"}}'\u001b[39m",
+                                "  ],",
+                                "  total: \u001b[33m9\u001b[39m,",
+                                "  nextPageUrl: \u001b[32m'http://localhost:8103/fhir/R4/Patient?_count=2&_offset=2&_total=accurate'\u001b[39m",
+                                "}"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "language": "markdown",
+            "source": [
+                "## Managing pages\n\nGetting the next page from an existing search"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "typescript",
+            "source": [
+                "if (!searchResult.linkUrl(\"next\")) {\n    console.log(\"No next page!\");\n    return;\n}\nsearchResult = await client.fetchPage(searchResult.linkUrl(\"next\"));\nconst output = {\n    // Search match returns all the resources that where a match for the search\n    // See https://www.hl7.org/fhir/valueset-search-entry-mode.html\n    patients: searchResult.searchMatch().map(JSON.stringify),\n\n    // Total number of matching entities, regardless of pagination\n    total: searchResult.total,\n\n    nextPageUrl: searchResult.linkUrl(\"next\"),\n};\noutput;"
+            ],
+            "outputs": [
+                {
+                    "items": [
+                        {
+                            "mime": "text/plain",
+                            "value": [
+                                "{",
+                                "  patients: [",
+                                "    \u001b[32m'{\"name\":[{\"given\":[\"Bill\"],\"family\":\"Evans\"}],\"gender\":\"male\",\"resourceType\":\"Patient\",\"text\":{\"status\":\"generated\",\"div\":\"<div xmlns=\\\\\"http://www.w3.org/1999/xhtml\\\\\"><ul><li><span>Gender: </span>male</li><li><span>Name: </span><ul><li>Bill Evans</li></ul></li></ul></div>\"},\"id\":\"d605a412-349f-42b5-897e-901b5f2c0ac8\",\"meta\":{\"versionId\":\"0c166114-0b9a-44de-8ef0-248916ec0c33\",\"lastUpdated\":\"2023-07-25T15:03:16.054Z\"}}'\u001b[39m,",
+                                "    \u001b[32m'{\"name\":[{\"given\":[\"Nina\"],\"family\":\"Simone\"}],\"gender\":\"female\",\"resourceType\":\"Patient\",\"text\":{\"status\":\"generated\",\"div\":\"<div xmlns=\\\\\"http://www.w3.org/1999/xhtml\\\\\"><ul><li><span>Gender: </span>female</li><li><span>Name: </span><ul><li>Nina Simone</li></ul></li></ul></div>\"},\"id\":\"f4edd84a-2eea-40ac-ad3a-c33bdbb0d795\",\"meta\":{\"versionId\":\"707608b3-1186-4f35-acd0-c021798b5add\",\"lastUpdated\":\"2023-07-25T15:03:16.058Z\"}}'\u001b[39m",
+                                "  ],",
+                                "  total: \u001b[33m9\u001b[39m,",
+                                "  nextPageUrl: \u001b[32m'http://localhost:8103/fhir/R4/Patient?_count=2&_offset=4&_total=accurate'\u001b[39m",
+                                "}"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "language": "markdown",
+            "source": [
+                "If need be, you can iterate across pages"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "typescript",
+            "source": [
+                "const output = [];\nawait client.searchByPage(\n    \"Patient\",\n    search => search._count(2),\n    async (result) => {\n        output.push(result.searchMatch());\n    }\n);\n\noutput;"
+            ],
+            "outputs": [
+                {
+                    "items": [
+                        {
+                            "mime": "text/plain",
+                            "value": [
+                                "[",
+                                "  [",
+                                "    {",
+                                "      name: \u001b[36m[Array]\u001b[39m,",
+                                "      gender: \u001b[32m'male'\u001b[39m,",
+                                "      resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "      text: \u001b[36m[Object]\u001b[39m,",
+                                "      id: \u001b[32m'337a509c-0bd9-48f0-8f89-855bad9d8c6f'\u001b[39m,",
+                                "      meta: \u001b[36m[Object]\u001b[39m,",
+                                "      managingOrganization: \u001b[36m[Object]\u001b[39m",
+                                "    },",
+                                "    {",
+                                "      name: \u001b[36m[Array]\u001b[39m,",
+                                "      gender: \u001b[32m'male'\u001b[39m,",
+                                "      resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "      text: \u001b[36m[Object]\u001b[39m,",
+                                "      id: \u001b[32m'894e29b1-4b2b-44d7-8d8c-2ae21fdfd20b'\u001b[39m,",
+                                "      meta: \u001b[36m[Object]\u001b[39m",
+                                "    }",
+                                "  ],",
+                                "  [",
+                                "    {",
+                                "      name: \u001b[36m[Array]\u001b[39m,",
+                                "      gender: \u001b[32m'male'\u001b[39m,",
+                                "      resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "      text: \u001b[36m[Object]\u001b[39m,",
+                                "      id: \u001b[32m'd605a412-349f-42b5-897e-901b5f2c0ac8'\u001b[39m,",
+                                "      meta: \u001b[36m[Object]\u001b[39m",
+                                "    },",
+                                "    {",
+                                "      name: \u001b[36m[Array]\u001b[39m,",
+                                "      gender: \u001b[32m'female'\u001b[39m,",
+                                "      resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "      text: \u001b[36m[Object]\u001b[39m,",
+                                "      id: \u001b[32m'f4edd84a-2eea-40ac-ad3a-c33bdbb0d795'\u001b[39m,",
+                                "      meta: \u001b[36m[Object]\u001b[39m",
+                                "    }",
+                                "  ],",
+                                "  [",
+                                "    {",
+                                "      name: \u001b[36m[Array]\u001b[39m,",
+                                "      gender: \u001b[32m'male'\u001b[39m,",
+                                "      resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "      text: \u001b[36m[Object]\u001b[39m,",
+                                "      id: \u001b[32m'7a0b7be9-fd31-46f4-9ce2-a2b1abfdca2d'\u001b[39m,",
+                                "      meta: \u001b[36m[Object]\u001b[39m",
+                                "    },",
+                                "    {",
+                                "      name: \u001b[36m[Array]\u001b[39m,",
+                                "      gender: \u001b[32m'male'\u001b[39m,",
+                                "      resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "      text: \u001b[36m[Object]\u001b[39m,",
+                                "      id: \u001b[32m'2551651c-1d51-41cb-8ead-cd8445993a49'\u001b[39m,",
+                                "      meta: \u001b[36m[Object]\u001b[39m",
+                                "    }",
+                                "  ],",
+                                "  [",
+                                "    {",
+                                "      name: \u001b[36m[Array]\u001b[39m,",
+                                "      gender: \u001b[32m'male'\u001b[39m,",
+                                "      resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "      text: \u001b[36m[Object]\u001b[39m,",
+                                "      id: \u001b[32m'76f76ad0-11ee-402e-ba7f-bd23347410d0'\u001b[39m,",
+                                "      meta: \u001b[36m[Object]\u001b[39m",
+                                "    },",
+                                "    {",
+                                "      name: \u001b[36m[Array]\u001b[39m,",
+                                "      gender: \u001b[32m'female'\u001b[39m,",
+                                "      resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "      text: \u001b[36m[Object]\u001b[39m,",
+                                "      id: \u001b[32m'4d8abcba-65a7-42ca-ac1d-a6d39ffb45eb'\u001b[39m,",
+                                "      meta: \u001b[36m[Object]\u001b[39m",
+                                "    }",
+                                "  ],",
+                                "  [",
+                                "    {",
+                                "      name: \u001b[36m[Array]\u001b[39m,",
+                                "      gender: \u001b[32m'male'\u001b[39m,",
+                                "      resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "      text: \u001b[36m[Object]\u001b[39m,",
+                                "      id: \u001b[32m'ca361279-5f2d-43ce-b4c9-7aaba0c0df9d'\u001b[39m,",
+                                "      meta: \u001b[36m[Object]\u001b[39m",
+                                "    }",
+                                "  ]",
+                                "]"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "language": "markdown",
+            "source": [
+                "Or even retrieve all pages at once. *Be careful with this one, as it can lead to very high latency and memory consumption on large datasets.*"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "typescript",
+            "source": [
+                "// The `_count` search parameters here sets the page size when retrieving. You should probably set it to a much higher number in real life.\nconst allPagesResult = await client.searchAllPages(\"Patient\", search => search._count(2));\n\nallPagesResult.searchMatch();"
+            ],
+            "outputs": [
+                {
+                    "items": [
+                        {
+                            "mime": "text/plain",
+                            "value": [
+                                "[",
+                                "  {",
+                                "    name: [",
+                                "      \u001b[36m[Object]\u001b[39m",
+                                "    ],",
+                                "    gender: \u001b[32m'male'\u001b[39m,",
+                                "    resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "    text: {",
+                                "      status: \u001b[32m'generated'\u001b[39m,",
+                                "      div: \u001b[32m'<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li><span>Gender: </span>male</li><li><span>Name: </span><ul><li>Miles Davis</li></ul></li></ul></div>'\u001b[39m",
+                                "    },",
+                                "    id: \u001b[32m'337a509c-0bd9-48f0-8f89-855bad9d8c6f'\u001b[39m,",
+                                "    meta: {",
+                                "      versionId: \u001b[32m'ccd16cfd-8367-44cd-aa5b-d1a2358dedea'\u001b[39m,",
+                                "      lastUpdated: \u001b[32m'2023-07-25T15:03:16.026Z'\u001b[39m",
+                                "    },",
+                                "    managingOrganization: {",
+                                "      reference: \u001b[32m'Organization/b747dc3c-bcee-413e-ace8-c1f235216d6c'\u001b[39m,",
+                                "      type: \u001b[32m'Organization'\u001b[39m,",
+                                "      display: \u001b[32m'Acme, Inc'\u001b[39m",
+                                "    }",
+                                "  },",
+                                "  {",
+                                "    name: [",
+                                "      \u001b[36m[Object]\u001b[39m",
+                                "    ],",
+                                "    gender: \u001b[32m'male'\u001b[39m,",
+                                "    resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "    text: {",
+                                "      status: \u001b[32m'generated'\u001b[39m,",
+                                "      div: \u001b[32m'<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li><span>Gender: </span>male</li><li><span>Name: </span><ul><li>John Coltrane</li></ul></li></ul></div>'\u001b[39m",
+                                "    },",
+                                "    id: \u001b[32m'894e29b1-4b2b-44d7-8d8c-2ae21fdfd20b'\u001b[39m,",
+                                "    meta: {",
+                                "      versionId: \u001b[32m'387a8a11-8296-44d4-8a09-7895daea4e7f'\u001b[39m,",
+                                "      lastUpdated: \u001b[32m'2023-07-25T15:03:16.049Z'\u001b[39m",
+                                "    }",
+                                "  },",
+                                "  {",
+                                "    name: [",
+                                "      \u001b[36m[Object]\u001b[39m",
+                                "    ],",
+                                "    gender: \u001b[32m'male'\u001b[39m,",
+                                "    resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "    text: {",
+                                "      status: \u001b[32m'generated'\u001b[39m,",
+                                "      div: \u001b[32m'<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li><span>Gender: </span>male</li><li><span>Name: </span><ul><li>Bill Evans</li></ul></li></ul></div>'\u001b[39m",
+                                "    },",
+                                "    id: \u001b[32m'd605a412-349f-42b5-897e-901b5f2c0ac8'\u001b[39m,",
+                                "    meta: {",
+                                "      versionId: \u001b[32m'0c166114-0b9a-44de-8ef0-248916ec0c33'\u001b[39m,",
+                                "      lastUpdated: \u001b[32m'2023-07-25T15:03:16.054Z'\u001b[39m",
+                                "    }",
+                                "  },",
+                                "  {",
+                                "    name: [",
+                                "      \u001b[36m[Object]\u001b[39m",
+                                "    ],",
+                                "    gender: \u001b[32m'female'\u001b[39m,",
+                                "    resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "    text: {",
+                                "      status: \u001b[32m'generated'\u001b[39m,",
+                                "      div: \u001b[32m'<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li><span>Gender: </span>female</li><li><span>Name: </span><ul><li>Nina Simone</li></ul></li></ul></div>'\u001b[39m",
+                                "    },",
+                                "    id: \u001b[32m'f4edd84a-2eea-40ac-ad3a-c33bdbb0d795'\u001b[39m,",
+                                "    meta: {",
+                                "      versionId: \u001b[32m'707608b3-1186-4f35-acd0-c021798b5add'\u001b[39m,",
+                                "      lastUpdated: \u001b[32m'2023-07-25T15:03:16.058Z'\u001b[39m",
+                                "    }",
+                                "  },",
+                                "  {",
+                                "    name: [",
+                                "      \u001b[36m[Object]\u001b[39m",
+                                "    ],",
+                                "    gender: \u001b[32m'male'\u001b[39m,",
+                                "    resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "    text: {",
+                                "      status: \u001b[32m'generated'\u001b[39m,",
+                                "      div: \u001b[32m'<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li><span>Gender: </span>male</li><li><span>Name: </span><ul><li>Oscar Petterson</li></ul></li></ul></div>'\u001b[39m",
+                                "    },",
+                                "    id: \u001b[32m'7a0b7be9-fd31-46f4-9ce2-a2b1abfdca2d'\u001b[39m,",
+                                "    meta: {",
+                                "      versionId: \u001b[32m'e85c3a2d-ec12-41d1-9b35-4cf145bd9229'\u001b[39m,",
+                                "      lastUpdated: \u001b[32m'2023-07-25T15:03:16.061Z'\u001b[39m",
+                                "    }",
+                                "  },",
+                                "  {",
+                                "    name: [",
+                                "      \u001b[36m[Object]\u001b[39m",
+                                "    ],",
+                                "    gender: \u001b[32m'male'\u001b[39m,",
+                                "    resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "    text: {",
+                                "      status: \u001b[32m'generated'\u001b[39m,",
+                                "      div: \u001b[32m'<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li><span>Gender: </span>male</li><li><span>Name: </span><ul><li>John Coltrane</li></ul></li></ul></div>'\u001b[39m",
+                                "    },",
+                                "    id: \u001b[32m'2551651c-1d51-41cb-8ead-cd8445993a49'\u001b[39m,",
+                                "    meta: {",
+                                "      versionId: \u001b[32m'57168529-9349-4f61-96b0-548d946301a5'\u001b[39m,",
+                                "      lastUpdated: \u001b[32m'2023-07-25T15:03:16.069Z'\u001b[39m",
+                                "    }",
+                                "  },",
+                                "  {",
+                                "    name: [",
+                                "      \u001b[36m[Object]\u001b[39m",
+                                "    ],",
+                                "    gender: \u001b[32m'male'\u001b[39m,",
+                                "    resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "    text: {",
+                                "      status: \u001b[32m'generated'\u001b[39m,",
+                                "      div: \u001b[32m'<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li><span>Gender: </span>male</li><li><span>Name: </span><ul><li>Bill Evans</li></ul></li></ul></div>'\u001b[39m",
+                                "    },",
+                                "    id: \u001b[32m'76f76ad0-11ee-402e-ba7f-bd23347410d0'\u001b[39m,",
+                                "    meta: {",
+                                "      versionId: \u001b[32m'fd420612-ed3f-45f6-8482-c9027c4b72d7'\u001b[39m,",
+                                "      lastUpdated: \u001b[32m'2023-07-25T15:03:16.073Z'\u001b[39m",
+                                "    }",
+                                "  },",
+                                "  {",
+                                "    name: [",
+                                "      \u001b[36m[Object]\u001b[39m",
+                                "    ],",
+                                "    gender: \u001b[32m'female'\u001b[39m,",
+                                "    resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "    text: {",
+                                "      status: \u001b[32m'generated'\u001b[39m,",
+                                "      div: \u001b[32m'<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li><span>Gender: </span>female</li><li><span>Name: </span><ul><li>Nina Simone</li></ul></li></ul></div>'\u001b[39m",
+                                "    },",
+                                "    id: \u001b[32m'4d8abcba-65a7-42ca-ac1d-a6d39ffb45eb'\u001b[39m,",
+                                "    meta: {",
+                                "      versionId: \u001b[32m'442c9493-bcde-4ba9-a8b7-85f34405ac45'\u001b[39m,",
+                                "      lastUpdated: \u001b[32m'2023-07-25T15:03:16.076Z'\u001b[39m",
+                                "    }",
+                                "  },",
+                                "  {",
+                                "    name: [",
+                                "      \u001b[36m[Object]\u001b[39m",
+                                "    ],",
+                                "    gender: \u001b[32m'male'\u001b[39m,",
+                                "    resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "    text: {",
+                                "      status: \u001b[32m'generated'\u001b[39m,",
+                                "      div: \u001b[32m'<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li><span>Gender: </span>male</li><li><span>Name: </span><ul><li>Oscar Petterson</li></ul></li></ul></div>'\u001b[39m",
+                                "    },",
+                                "    id: \u001b[32m'ca361279-5f2d-43ce-b4c9-7aaba0c0df9d'\u001b[39m,",
+                                "    meta: {",
+                                "      versionId: \u001b[32m'71ca32a2-3f5b-49c6-b462-4745d4ab4db2'\u001b[39m,",
+                                "      lastUpdated: \u001b[32m'2023-07-25T15:03:16.080Z'\u001b[39m",
+                                "    }",
+                                "  }",
+                                "]"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

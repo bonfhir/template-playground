@@ -1,0 +1,263 @@
+{
+    "cells": [
+        {
+            "language": "markdown",
+            "source": [
+                "# FHIR resources "
+            ],
+            "outputs": []
+        },
+        {
+            "language": "markdown",
+            "source": [
+                "## Create your first FHIR resource"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "typescript",
+            "source": [
+                "import { build } from \"@bonfhir/core/r4b\";\n\nlet patient = build(\"Patient\", {\n    name: [{ given: [\"Miles\"], family: \"Davis\" }],\n    gender: \"male\",\n});\n\n// Display the patient in the notebook\npatient;"
+            ],
+            "outputs": [
+                {
+                    "items": [
+                        {
+                            "mime": "text/plain",
+                            "value": [
+                                "{",
+                                "  name: [",
+                                "    {",
+                                "      given: \u001b[36m[Array]\u001b[39m,",
+                                "      family: \u001b[32m'Davis'\u001b[39m",
+                                "    }",
+                                "  ],",
+                                "  gender: \u001b[32m'male'\u001b[39m,",
+                                "  resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "  text: {",
+                                "    status: \u001b[32m'generated'\u001b[39m,",
+                                "    div: \u001b[32m'<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li><span>Gender: </span>male</li><li><span>Name: </span><ul><li>Miles Davis</li></ul></li></ul></div>'\u001b[39m",
+                                "  }",
+                                "}"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "language": "markdown",
+            "source": [
+                "*As you can see, the `build` method creates new FHIR Resources, with the appropriate `resourceType` and [Narrative](https://www.hl7.org/fhir/narrative.html) generated for you.*"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "markdown",
+            "source": [
+                "## Save the FHIR resource on the server"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "typescript",
+            "source": [
+                "import { FetchFhirClient } from \"@bonfhir/core/r4b\";\n\n// Create a FHIR Client connected to the local FHIR Server\nconst client = new FetchFhirClient({\n  baseUrl: \"http://localhost:8103/fhir/R4/\",\n  auth: {\n    tokenUrl: \"http://localhost:8103/oauth2/token\",\n    clientId: \"f54370de-eaf3-4d81-a17e-24860f667912\",\n    clientSecret:\n      \"75d8e7d06bf9283926c51d5f461295ccf0b69128e983b6ecdd5a9c07506895de\",\n  },\n})\n\n// Create the patient\npatient = await client.create(patient);\npatient;"
+            ],
+            "outputs": [
+                {
+                    "items": [
+                        {
+                            "mime": "text/plain",
+                            "value": [
+                                "{",
+                                "  name: [",
+                                "    {",
+                                "      given: \u001b[36m[Array]\u001b[39m,",
+                                "      family: \u001b[32m'Davis'\u001b[39m",
+                                "    }",
+                                "  ],",
+                                "  gender: \u001b[32m'male'\u001b[39m,",
+                                "  resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "  text: {",
+                                "    status: \u001b[32m'generated'\u001b[39m,",
+                                "    div: \u001b[32m'<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li><span>Gender: </span>male</li><li><span>Name: </span><ul><li>Miles Davis</li></ul></li></ul></div>'\u001b[39m",
+                                "  },",
+                                "  id: \u001b[32m'337a509c-0bd9-48f0-8f89-855bad9d8c6f'\u001b[39m,",
+                                "  meta: {",
+                                "    versionId: \u001b[32m'efffbdc9-4838-4307-94fb-8524f020c3ff'\u001b[39m,",
+                                "    lastUpdated: \u001b[32m'2023-07-25T15:03:15.983Z'\u001b[39m",
+                                "  }",
+                                "}"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "language": "markdown",
+            "source": [
+                "Open http://localhost:3000/Patient to see the patients in the local FHIR Server.\n - use `admin@example.com`/`medplum_admin` to login"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "markdown",
+            "source": [
+                "## Create an Organization, and reference it on the patient, and update the patient."
+            ],
+            "outputs": []
+        },
+        {
+            "language": "typescript",
+            "source": [
+                "import { reference } from \"@bonfhir/core/r4b\";\n\nlet organization = build(\"Organization\", {\n  name: \"Acme, Inc\"\n});\n\n// We can use the `save` method here, which is a shorthand for `create` or `update`.\norganization = await client.save(organization);\n\npatient.managingOrganization = reference(organization);\npatient = await client.save(patient);\n\nconst output = { organization, patient };\noutput;"
+            ],
+            "outputs": [
+                {
+                    "items": [
+                        {
+                            "mime": "text/plain",
+                            "value": [
+                                "{",
+                                "  organization: {",
+                                "    name: \u001b[32m'Acme, Inc'\u001b[39m,",
+                                "    resourceType: \u001b[32m'Organization'\u001b[39m,",
+                                "    text: {",
+                                "      status: \u001b[32m'generated'\u001b[39m,",
+                                "      div: \u001b[32m'<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li><span>Name: </span>Acme, Inc</li></ul></div>'\u001b[39m",
+                                "    },",
+                                "    id: \u001b[32m'b747dc3c-bcee-413e-ace8-c1f235216d6c'\u001b[39m,",
+                                "    meta: {",
+                                "      versionId: \u001b[32m'2ab13c52-b467-4de0-a106-d26ccf211e94'\u001b[39m,",
+                                "      lastUpdated: \u001b[32m'2023-07-25T15:03:16.016Z'\u001b[39m",
+                                "    }",
+                                "  },",
+                                "  patient: {",
+                                "    name: [",
+                                "      \u001b[36m[Object]\u001b[39m",
+                                "    ],",
+                                "    gender: \u001b[32m'male'\u001b[39m,",
+                                "    resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "    text: {",
+                                "      status: \u001b[32m'generated'\u001b[39m,",
+                                "      div: \u001b[32m'<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li><span>Gender: </span>male</li><li><span>Name: </span><ul><li>Miles Davis</li></ul></li></ul></div>'\u001b[39m",
+                                "    },",
+                                "    id: \u001b[32m'337a509c-0bd9-48f0-8f89-855bad9d8c6f'\u001b[39m,",
+                                "    meta: {",
+                                "      versionId: \u001b[32m'ccd16cfd-8367-44cd-aa5b-d1a2358dedea'\u001b[39m,",
+                                "      lastUpdated: \u001b[32m'2023-07-25T15:03:16.026Z'\u001b[39m",
+                                "    },",
+                                "    managingOrganization: {",
+                                "      reference: \u001b[32m'Organization/b747dc3c-bcee-413e-ace8-c1f235216d6c'\u001b[39m,",
+                                "      type: \u001b[32m'Organization'\u001b[39m,",
+                                "      display: \u001b[32m'Acme, Inc'\u001b[39m",
+                                "    }",
+                                "  }",
+                                "}"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "language": "markdown",
+            "source": [
+                "*Notice how the `reference` helper was able to infer the `reference.display` value from the `Organization.name` value.*"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "markdown",
+            "source": [
+                "## Additional patients\n\nLet's create additional patients for the other notebooks, using a transaction this time."
+            ],
+            "outputs": []
+        },
+        {
+            "language": "typescript",
+            "source": [
+                "// Create a transaction builder\nconst transaction = client.transaction();\n\n// The builder exposes the same API as the client itself\n// The difference is that it does not execute right away, but instead builds a [Bundle](https://www.hl7.org/fhir/bundle.html)\n// Each operation returns a `FutureRequest` which is populated once the transaction has been sent\nconst johnColtrane = transaction.create(build(\"Patient\", { name: [{ given: [\"John\"], family: \"Coltrane\" }], gender: \"male\", }));\nconst billEvans = transaction.create(build(\"Patient\", { name: [{ given: [\"Bill\"], family: \"Evans\" }], gender: \"male\", }));\nconst ninaSimone = transaction.create(build(\"Patient\", { name: [{ given: [\"Nina\"], family: \"Simone\" }], gender: \"female\", }));\nconst oscarPetterson = transaction.create(build(\"Patient\", { name: [{ given: [\"Oscar\"], family: \"Petterson\" }], gender: \"male\", }));\n\n// Send the bundle and execute all operations\nawait transaction.send();\n\n// De-batching is done automatically - each response contain the resolved resource\nconst output = {\n    johnColtrane: johnColtrane.resource,\n    billEvans: billEvans.resource,\n    ninaSimone: ninaSimone.resource,\n    oscarPetterson: oscarPetterson.resource,\n};\noutput;"
+            ],
+            "outputs": [
+                {
+                    "items": [
+                        {
+                            "mime": "text/plain",
+                            "value": [
+                                "{",
+                                "  johnColtrane: {",
+                                "    name: [",
+                                "      \u001b[36m[Object]\u001b[39m",
+                                "    ],",
+                                "    gender: \u001b[32m'male'\u001b[39m,",
+                                "    resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "    text: {",
+                                "      status: \u001b[32m'generated'\u001b[39m,",
+                                "      div: \u001b[32m'<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li><span>Gender: </span>male</li><li><span>Name: </span><ul><li>John Coltrane</li></ul></li></ul></div>'\u001b[39m",
+                                "    },",
+                                "    id: \u001b[32m'2551651c-1d51-41cb-8ead-cd8445993a49'\u001b[39m,",
+                                "    meta: {",
+                                "      versionId: \u001b[32m'57168529-9349-4f61-96b0-548d946301a5'\u001b[39m,",
+                                "      lastUpdated: \u001b[32m'2023-07-25T15:03:16.069Z'\u001b[39m",
+                                "    }",
+                                "  },",
+                                "  billEvans: {",
+                                "    name: [",
+                                "      \u001b[36m[Object]\u001b[39m",
+                                "    ],",
+                                "    gender: \u001b[32m'male'\u001b[39m,",
+                                "    resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "    text: {",
+                                "      status: \u001b[32m'generated'\u001b[39m,",
+                                "      div: \u001b[32m'<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li><span>Gender: </span>male</li><li><span>Name: </span><ul><li>Bill Evans</li></ul></li></ul></div>'\u001b[39m",
+                                "    },",
+                                "    id: \u001b[32m'76f76ad0-11ee-402e-ba7f-bd23347410d0'\u001b[39m,",
+                                "    meta: {",
+                                "      versionId: \u001b[32m'fd420612-ed3f-45f6-8482-c9027c4b72d7'\u001b[39m,",
+                                "      lastUpdated: \u001b[32m'2023-07-25T15:03:16.073Z'\u001b[39m",
+                                "    }",
+                                "  },",
+                                "  ninaSimone: {",
+                                "    name: [",
+                                "      \u001b[36m[Object]\u001b[39m",
+                                "    ],",
+                                "    gender: \u001b[32m'female'\u001b[39m,",
+                                "    resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "    text: {",
+                                "      status: \u001b[32m'generated'\u001b[39m,",
+                                "      div: \u001b[32m'<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li><span>Gender: </span>female</li><li><span>Name: </span><ul><li>Nina Simone</li></ul></li></ul></div>'\u001b[39m",
+                                "    },",
+                                "    id: \u001b[32m'4d8abcba-65a7-42ca-ac1d-a6d39ffb45eb'\u001b[39m,",
+                                "    meta: {",
+                                "      versionId: \u001b[32m'442c9493-bcde-4ba9-a8b7-85f34405ac45'\u001b[39m,",
+                                "      lastUpdated: \u001b[32m'2023-07-25T15:03:16.076Z'\u001b[39m",
+                                "    }",
+                                "  },",
+                                "  oscarPetterson: {",
+                                "    name: [",
+                                "      \u001b[36m[Object]\u001b[39m",
+                                "    ],",
+                                "    gender: \u001b[32m'male'\u001b[39m,",
+                                "    resourceType: \u001b[32m'Patient'\u001b[39m,",
+                                "    text: {",
+                                "      status: \u001b[32m'generated'\u001b[39m,",
+                                "      div: \u001b[32m'<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li><span>Gender: </span>male</li><li><span>Name: </span><ul><li>Oscar Petterson</li></ul></li></ul></div>'\u001b[39m",
+                                "    },",
+                                "    id: \u001b[32m'ca361279-5f2d-43ce-b4c9-7aaba0c0df9d'\u001b[39m,",
+                                "    meta: {",
+                                "      versionId: \u001b[32m'71ca32a2-3f5b-49c6-b462-4745d4ab4db2'\u001b[39m,",
+                                "      lastUpdated: \u001b[32m'2023-07-25T15:03:16.080Z'\u001b[39m",
+                                "    }",
+                                "  }",
+                                "}"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
