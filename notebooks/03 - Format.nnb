@@ -3,9 +3,100 @@
         {
             "language": "markdown",
             "source": [
-                "# Formatting Data Types"
+                "# Formatting Data Types\n\nBonFHIR comes with a formatter for [FHIR Data types](http://hl7.org/fhir/datatypes.html) that can be used to format localized values."
             ],
             "outputs": []
+        },
+        {
+            "language": "markdown",
+            "source": [
+                "## Using the default formatter\n\nThe default formatter in BonFHIR (`Formatter.default`) picks up the ambient locale, which is:\n - the locale of the user if running in a browser\n - the system locale in the case of NODE (most probably the value of either `LANG`, `LANGUAGE`, `LC_ALL` or `LC_MESSAGES` environment variables)\n\nThe formatter uses the standard [`Intl`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl) API."
+            ],
+            "outputs": []
+        },
+        {
+            "language": "typescript",
+            "source": [
+                "import { Formatter } from \"@bonfhir/core/r5\";\n\nconst dateValue = \"1959-02-03\";\n// First argument is the data type to format, second is the value.\nFormatter.default.format(\"date\", dateValue);"
+            ],
+            "outputs": [
+                {
+                    "items": [
+                        {
+                            "mime": "text/plain",
+                            "value": [
+                                "\u001b[32m'2/3/1959'\u001b[39m"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "language": "markdown",
+            "source": [
+                "Use options to control the output:"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "typescript",
+            "source": [
+                "const fullDate = Formatter.default.format(\"date\", dateValue, { dateStyle: \"full\" });\nconst longDate = Formatter.default.format(\"date\", dateValue, { dateStyle: \"long\" });\nconst relativeDate = Formatter.default.format(\"date\", dateValue, { dateStyle: \"relative\" });\n\nconsole.log(JSON.stringify({ fullDate, longDate, relativeDate }, undefined, 2));"
+            ],
+            "outputs": [
+                {
+                    "items": [
+                        {
+                            "mime": "application/vnd.code.notebook.stdout",
+                            "value": [
+                                "{",
+                                "  \"fullDate\": \"Tuesday, February 3, 1959\",",
+                                "  \"longDate\": \"February 3, 1959\",",
+                                "  \"relativeDate\": \"65 years ago\"",
+                                "}",
+                                ""
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "language": "typescript",
+            "source": [
+                "Formatter.default.format(\"boolean\", true);"
+            ],
+            "outputs": [
+                {
+                    "items": [
+                        {
+                            "mime": "text/plain",
+                            "value": [
+                                "\u001b[32m'yes'\u001b[39m"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "language": "typescript",
+            "source": [
+                "Formatter.default.format(\"decimal\", 12.533, {  })"
+            ],
+            "outputs": [
+                {
+                    "items": [
+                        {
+                            "mime": "text/plain",
+                            "value": [
+                                "\u001b[32m'12.53'\u001b[39m"
+                            ]
+                        }
+                    ]
+                }
+            ]
         }
     ]
 }
